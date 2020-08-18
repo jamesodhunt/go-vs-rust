@@ -359,6 +359,7 @@
   block:
 
   ```rust
+  // ERROR: incorrect code!
   // Oops! This creates an fd, then destroys it "returning" nothing (the unit type, "()")
   let file = unsafe { File::from_raw_fd(fd); };
   ```
@@ -366,6 +367,31 @@
   The corrected version (without the semi-colon in the `unsafe` block):
   ```rust
   let file: File = unsafe { File::from_raw_fd(fd) };
+  ```
+
+  Another "unsafe" gotcha using a `loop`. Spot the bug:
+
+  ```rust
+  // ERROR: incorrect code!
+  loop {
+      let mut reader = unsafe { File::from_raw_fd(read_fd) };
+
+      // do something with the reader
+  }
+  ```
+
+  The code above is *incorrect* since the `reader` goes out of scope each time
+  through the loop. But that means the `File` object satisfying the `Read`
+  trait gets garbage collected each time, and *that* means the underlying file
+  descriptor (`read_fd`) is **closed** after the first iteration through the
+  loop! The solution is simple - move the `reader` out of the loop:
+
+  ```rust
+  let mut reader = unsafe { File::from_raw_fd(read_fd) };
+
+  loop {
+      // do something with the reader
+  }
   ```
 
 - Lifetimes (advanced topic)
