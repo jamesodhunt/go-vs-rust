@@ -130,6 +130,67 @@
   But in the success case in this example, there is nothing meaninful to
   return, hence `Ok()` returns `()`.
 
+- Be very careful when using `match` with an enum!
+
+  See if you can spot the mistake here:
+
+  ```rust
+  enum Thing {
+      Foo,
+      Bar,
+  }
+
+  let thing = Thing::Foo;
+
+  // ERROR: incorrect code!
+  match thing {
+      Foo => println!("Got Foo"),
+      Bar => println!("Got Bar"),
+  };
+  ```
+
+  This looks reasonable _and it compiles_. However, it doesn't work as
+  written: whatever value `thing` has, the code above will **always** display
+  "Got Foo". Why?
+
+  From https://doc.rust-lang.org/reference/patterns.html:
+
+  > By default, identifier patterns bind a variable to a copy of or move
+  > from the matched value...
+
+  Still not clear? How about if we change that `match` code slightly:
+
+  ```rust
+  // ERROR: incorrect code!
+  match thing {
+      Foo => println!("Got Foo"),
+      Bar => println!("Got Bar"),
+      omg => println!("Got omg"),
+      wtf => println!("Got wtf"),
+      blah => println!("Got blah"),
+  };
+  ```
+
+  This is _valid_ code: it compiles, but it's incorrect. Since we are not matching on
+  _fully qualified enum values_, rust assumes you want to create a _variable_
+  in each of the match arms so it creates three _variables_: `Foo`, `Bar` and
+  `blah`! Worse still, since the code above is basically creating a set of
+  variables that all handle "any" valid `Thing` value, the only arm which will
+  **ever** match is the first one ("Got Foo")!
+
+  What the programmer meant to write was this:
+
+  ```rust
+  match thing {
+      Thing::Foo => println!("Got Thing::Foo"),
+      Thing::Bar => println!("Got Thing::Bar"),
+  };
+  ```
+
+  Note that the compiler will warn about this scenario. See
+  https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint_defs/builtin/static.BINDINGS_WITH_VARIANT_NAME.html
+  for further details.
+
 - For optional values or values that could be `NULL` (C) or `nil` (go), use an
   `Option` type:
 
