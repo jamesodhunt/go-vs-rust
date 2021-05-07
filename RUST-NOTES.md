@@ -155,7 +155,7 @@
 
   From https://doc.rust-lang.org/reference/patterns.html:
 
-  > By default, identifier patterns bind a variable to a copy of or move
+  > By default, identifier patterns **bind a variable** to a copy of or move
   > from the matched value...
 
   Still not clear? How about if we change that `match` code slightly:
