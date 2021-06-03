@@ -24,7 +24,7 @@
   // Works
   num = 1;
   ```
-  
+
 - No files are imported automatically into `main.rs`.
 
   To import specify `mod $filename` *for every file*.
@@ -357,6 +357,61 @@
 
 - When you run `cargo build` or `cargo run`, the crate will be downloaded
   automatically and compiled into your code.
+
+## Unit tests
+
+- To mock with rust, use the `cfg` annotation. This allows you to create
+  test-specific chunks of code:
+
+  ```rust
+  // Conditional assignment for tests using attributes.
+  #[cfg(test)]
+  const MULTIPLIER: u64 = 3;
+
+  #[cfg(not(test))]
+  const MULTIPLIER: u64 = 1;
+
+  #[cfg(test)]
+  fn handler() {
+      println!("I am the test version of the function!");
+  }
+
+  #[cfg(not(test))]
+  fn handler() {
+      println!("I am the production version of the function!");
+  }
+
+  fn foo() {
+      // The test version of the code
+      #[cfg(test)]
+      let x = 20;
+
+      // The "production" version of the code
+      #[cfg(not(test))]
+      let x = -5;
+
+      println!("INFO: x has value: {}", x);
+  }
+
+  // Non-test (production) version of the macro
+  #[cfg(not(test))]
+  macro_rules! welcome_all {
+      ( $( $name:expr ),*) => {
+          $( println!("INFO: PRODUCTION version: welcome_all: Hello {}", $name);)*
+      };
+  }
+
+  // Test version of the macro
+  #[cfg(test)]
+  macro_rules! welcome_all {
+      ( $( $name:expr ),*) => {
+          $( println!("INFO: TEST version: welcome_all: Hello {}", $name);)*
+      };
+  }
+  ```
+
+  Now, when you run `cargo test` or `cargo tarpaulin`, the test versions will
+  be used rather than the non-test versions.
 
 # Gotchas
 
