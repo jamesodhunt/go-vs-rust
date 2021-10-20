@@ -602,3 +602,11 @@
   ```
 
   This shows that the `var_with_unknown_type` variable is of type `Foo`.
+
+- Architecture specific code
+  ```rust
+  #[cfg(target_arch = "x86_64")]
+  {
+    // XXX: This block will only run on Intel 64-bit platforms!
+  }
+  ```
