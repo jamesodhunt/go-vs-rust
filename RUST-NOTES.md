@@ -265,7 +265,7 @@
 - Use the `cargo` command if you want to build a multi-file project.
 - `cargo` expects your source files to live in `./src/`.
 
-- `cargo` creates a a `Cargo.toml` "manifest file" containing details of your
+- `cargo` creates a `Cargo.toml` "manifest file" containing details of your
   project including any external dependencies (vendored code).
 
 - Libraries/packages are called "crates" in rust terminology.
