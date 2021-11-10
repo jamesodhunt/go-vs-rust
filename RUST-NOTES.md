@@ -358,6 +358,63 @@
 - When you run `cargo build` or `cargo run`, the crate will be downloaded
   automatically and compiled into your code.
 
+## Raw identifiers
+
+Rust lets you create "raw string" literals using the special `r#` prefix and
+`#` suffix on a string:
+
+```rust
+let s = r#"this string contains
+
+embedded
+
+   newlines and whitespace.
+"#;
+```
+
+However, you can also use the magic `r#` prefix on identifiers! Check this
+out:
+
+```rust
+fn r#fn() {
+    let r#let = "let";
+
+    let r#match = match r#let {
+        "let" => true,
+        _ => false,
+    };
+
+    let r#String: String = "a string".to_string();
+
+    println!(
+        r#"Hello from the r#fn function!
+        r#let variable has value: {:?}
+        r#match is: {:?}
+        r#String is: {:?}
+        "#,
+        r#let, r#match, r#String
+    );
+}
+
+fn call_weird_function() {
+    r#fn();
+}
+```
+
+Using a `r#` prefix, you can create variables and functions with the same
+names as built-in identifiers or keywords like `fn`, `let`, `struct`, `match`, _etc_ (well, with the
+addition of the odd `r#` prefix anyway ;)
+
+A common use of this is for creating a variable called `type`. `type` on its
+own is actually a rust keyword, but by prefixing with `r#`, you can create a
+variable that is distinct from the keyword:
+
+```rust
+let r#type = "foo";
+
+println!("type is: {:?}", r#type);
+```
+
 ## Unit tests
 
 - To mock with rust, use the `cfg` annotation. This allows you to create
@@ -413,7 +470,7 @@
   Now, when you run `cargo test` or `cargo tarpaulin`, the test versions will
   be used rather than the non-test versions.
 
-# Gotchas
+## Gotchas
 
 - The last statement in a function is the return type and must *NOT*
   end with a semi-colon:
@@ -579,7 +636,7 @@
   clap = "3.0.0-beta.1"
   ```
 
-# Tricks
+## Tricks
 
 - To find out the type of a variable, assign to a variable of type "unit". The
   compiler will generate an error showing the types of both variables:
