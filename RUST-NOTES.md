@@ -1,5 +1,7 @@
 # Rust notes
 
+## Overview
+
 - "Golden Rule": Read the compiler messages *very* carefully; the compiler is
   *extremely* clever, pedantic, but also helpful! Generally it tells you what
   the problem is *and* how to fix it!
@@ -25,6 +27,8 @@
   num = 1;
   ```
 
+## Files, packages and builds
+
 - No files are imported automatically into `main.rs`.
 
   To import specify `mod $filename` *for every file*.
@@ -38,33 +42,58 @@
   foo::func2();
   ```
 
-- All functions are private by default.
+- You can call the rust compiler (`rustc`) directly to build a single-file.
+- Use the `cargo` command if you want to build a multi-file project.
+- `cargo` expects your source files to live in `./src/`.
 
-  To make them public prefix with `pub`.
+- `cargo` creates a `Cargo.toml` "manifest file" containing details of your
+  project including any external dependencies (vendored code).
 
-  ```rust
-  fn private_func() { println!("I am private"); }
+- Libraries/packages are called "crates" in rust terminology.
 
-  pub fn public_func() { println!("I am public"); }
+  Search for them using `cargo search`.
+
+- When you run `cargo build` or `cargo run`, the crate will be downloaded
+  automatically and compiled into your code.
+
+- All crates use [semver](https://semver.org) versioning.
+
+- To use a crate, add it's name and version to your `Cargo.toml` file.
+
+  ```sh
+  $ cargo search clap | head -1
+  clap = "3.0.0-beta.1"              # A simple to use, efficient, and full-featured Command Line Argument Parser
   ```
 
-- All structures are private by default.
+  After adding those details to your `Cargo.toml`:
 
-  To make them public prefix with `pub`.
+  ```sh
+  $ sed -ne '/dependencies/,$ p' Cargo.toml
+  [dependencies]
+  clap = "3.0.0-beta.1"
+  ```
 
-- All structure *elements* are private by default.
-
-  To make them public prefix with `pub`.
+- Once you have added the crate details to the manifest, make the crate
+  available to your source file in `main.rs` using `use`:
 
   ```rust
-  pub struct Foo {
-    pub name: String,
-    pub age: u8,
+  // Import 3 types from the clap crate
+  use clap::{App, Arg, SubCommand};
 
-    // This element is private
-    password: String,
+  // Import all public symbols from the foo crate.
+  use foo::*;
+
+  // Import all public symbols from the bar crate.
+  use bar;
+
+  fn main() {
+    let args = App::new("test app");
+
+    // ...
   }
   ```
+
+## Macros
 
 - All macros are private by default.
 
@@ -73,7 +102,14 @@
 - The "unit type"
 
   `()` is a special type called the *unit type* that can be used anywhere rust
-  expects a types to go. (See below for an example).
+  expects a types to go.
+
+  A common idiom is to use it for a functions where we only care about
+  an error condition by specifying the function as returning
+  `Result<()>`. This means effectively, "return nothing (the unit
+  type) on success, but return a real error on failure.
+
+## Enumerations (enums)
 
 - Enums are fully namespaced - you need to specify
   `<enum-name>::<enum-value>` when using them:
@@ -129,6 +165,110 @@
   Hence, if an error is returned, there will be a string representation of it.
   But in the success case in this example, there is nothing meaninful to
   return, hence `Ok()` returns `()`.
+
+## Optional values
+
+- For optional values or values that could be `NULL` (C) or `nil` (go), use an
+  `Option` type:
+
+  ```rust
+
+  fn foo(s: String, u: u64, b: bool) {
+      println!("foo: s: {}, u: {}, b: {}", s, u, b);
+  }
+
+  type FP = fn(s: String, u: u64, b: bool);
+ 
+  // Initially, our Option variable is "unset"
+  let optional_function: Option<FP> = None;
+
+  optional_function = Some(foo);
+
+  // 
+  let fp = optional_function.unwrap();
+
+  fp("hello".to_string(), 123456789, true);
+  ```
+
+## Functions
+
+- All functions are private by default.
+
+  To make them public prefix with `pub`.
+
+  ```rust
+  fn private_func() { println!("I am private"); }
+
+  pub fn public_func() { println!("I am public"); }
+  ```
+
+- All structures are private by default.
+
+  To make them public prefix with `pub`.
+
+- All structure *elements* are private by default.
+
+  To make them public prefix with `pub`.
+
+  ```rust
+  pub struct Foo {
+    pub name: String,
+    pub age: u8,
+
+    // This element is private
+    password: String,
+  }
+  ```
+
+- Functions should return either a `Result` or an `Option`.
+
+- Returning a `Result` becomes very natural. In `golang`
+  most functions return a value *and* an `error`. But in rust, you just return
+  a `Result` which can return *either*! Compare:
+
+  ```go
+  // golang
+  func get_string() (string, error) { ... }
+
+  str, err := get_string()
+  if err != nil {
+      return err
+  }
+  ```
+
+  ```rust
+  // rust
+  fn foo() -> Result<String, String> { ... }
+
+  // This does the same as the golang example above. But it's much more
+  // concise. The magic question mark ("?") means "if this function
+  // returns and Err Result, return it back to the caller so entirely
+  // replaces the golang "if err != nil { ... }" boiler plate code.
+  let str = foo()?;
+  ```
+
+- If a function returns a `Result` or an `Option`, the compiler will expect
+  you to "consume it" - either check the result, or explicitly ignore it by
+  assigning to the `_` variable:
+
+  ```rust
+  // Explicitly ignore the return value of this function
+  // by assigning the result to the variable `_` (like in go).
+  let _ = func(1, 2, "foo"); 
+  ```
+
+- Functions can return multiple values using a tuple:
+
+  ```rust
+  fn return_multiple_values() -> (u64, i32, bool, String) {
+      (123456789, -226526, true, String::from("moo"))
+  }
+
+  let results = return_multiple_values();
+  println!("u64 value: {}", result.0);
+  ```
+
+## Matching
 
 - Be very careful when using `match` with an enum!
 
@@ -191,122 +331,7 @@
   https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint_defs/builtin/static.BINDINGS_WITH_VARIANT_NAME.html
   for further details.
 
-- For optional values or values that could be `NULL` (C) or `nil` (go), use an
-  `Option` type:
-
-  ```rust
-
-  fn foo(s: String, u: u64, b: bool) {
-      println!("foo: s: {}, u: {}, b: {}", s, u, b);
-  }
-
-  type FP = fn(s: String, u: u64, b: bool);
- 
-  // Initially, our Option variable is "unset"
-  let optional_function: Option<FP> = None;
-
-  optional_function = Some(foo);
-
-  // 
-  let fp = optional_function.unwrap();
-
-  fp("hello".to_string(), 123456789, true);
-  ```
-
-- Functions should return either a `Result` or an `Option`.
-
-- Returning a `Result` becomes very natural. In `golang`
-  most functions return a value *and* an `error`. But in rust, you just return
-  a `Result` which can return *either*! Compare:
-
-  ```go
-  // golang
-  func get_string() (string, error) { ... }
-
-  str, err := get_string()
-  if err != nil {
-      return err
-  }
-  ```
-
-  ```rust
-  // rust
-  fn foo() -> Result<String, String> { ... }
-
-  // This does the same as the golang example above. But it's much more
-  // concise. The magic question mark ("?") means "if this function
-  // returns and Err Result, return it back to the caller so entirely
-  // replaces the golang "if err != nil { ... }" boiler plate code.
-  let str = foo()?;
-  ```
-
-- If a function returns a `Result` or an `Option`, the compiler will expect
-  you to "consume it" - either check the result, or explicitly ignore it by
-  assigning to the `_` variable:
-
-  ```rust
-  // Explicitly ignore the return value of this function
-  // by assigning the result to the variable `_` (like in go).
-  let _ = func(1, 2, "foo"); 
-  ```
-
-- Functions can return multiple values using a tuple:
-
-  ```rust
-  fn return_multiple_values() -> (u64, i32, bool, String) {
-      (123456789, -226526, true, String::from("moo"))
-  }
-
-  let results = return_multiple_values();
-  println!("u64 value: {}", result.0);
-  ```
-
-- You can call the rust compiler (`rustc`) directly to build a single-file.
-- Use the `cargo` command if you want to build a multi-file project.
-- `cargo` expects your source files to live in `./src/`.
-
-- `cargo` creates a `Cargo.toml` "manifest file" containing details of your
-  project including any external dependencies (vendored code).
-
-- Libraries/packages are called "crates" in rust terminology.
-
-  Search for them using `cargo search`.
-
-- All crates use semver versioning.
-- To use a crate, add it's name and version to your `Cargo.toml` file.
-
-  ```sh
-  $ cargo search clap | head -1
-  clap = "3.0.0-beta.1"              # A simple to use, efficient, and full-featured Command Line Argument Parser
-  ```
-
-  After adding those details to your `Cargo.toml`:
-
-  ```sh
-  $ sed -ne '/dependencies/,$ p' Cargo.toml
-  [dependencies]
-  clap = "3.0.0-beta.1"
-  ```
-
-- Once you have added the crate details to the manifest, make the crate
-  available to your source file in `main.rs` using `use`:
-
-  ```rust
-  // Import 3 types from the clap crate
-  use clap::{App, Arg, SubCommand};
-
-  // Import all public symbols from the foo crate.
-  use foo::*;
-
-  // Import all public symbols from the bar crate.
-  use bar;
-
-  fn main() {
-    let args = App::new("test app");
-
-    // ...
-  }
-  ```
+## Strings
 
 - Rust has two types of string: `&str` (literal string) and
   `String` (vector of bytes):
@@ -335,7 +360,7 @@
   let str2 = string.as_str();
   ```
 
-- Converting a `&str` into a String
+- Converting a `&str` into a `String`
 
   There are various ways. The following are essentially equivalent:
 
@@ -354,9 +379,6 @@
   // convert the str1 (&str) into a String!
   let s3: String = str1.into();
   ```
-
-- When you run `cargo build` or `cargo run`, the crate will be downloaded
-  automatically and compiled into your code.
 
 ## Raw identifiers
 
@@ -617,6 +639,45 @@ println!("type is: {:?}", r#type);
       let result2 = bar()?;
   }
   ```
+
+- Be careful when implementing the `Display` and `Debug` traits to
+  avoid a runtime *crash*:
+
+  ```rust
+  struct Foo {
+      msg: String,
+  }
+
+  impl fmt::Display for Foo {
+      fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+          write!(f, "{}", self.msg)
+      }
+  }
+
+  impl fmt::Debug for Foo {
+      fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+          // BUG: Attempting to write `self` below results in rust
+          // calling *this method* to format the Foo passed to `write!()`.
+          // But this method then calls itself again and again and again until
+          // the program runs out of stack space!
+          write!(f, "Debug: {:?}", self)
+      }
+  }
+
+  fn main() {
+      let foo = Foo{
+          msg: "hello".into()
+      };
+
+      // Ok - this works as expected
+      println!("foo (using Display trait): {}", foo);
+
+      // BUG: this *crashes* the program! See comments above
+      println!("foo (using Debug trait): {:?}", foo);
+  }
+  ```
+
+## Manifest
 
 - Manifest file
 
