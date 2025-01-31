@@ -11,4 +11,4 @@ $(OUT): $(OBJECTS)
 	$(CC) -I. -g -c $< -o $@
 
 clean:
-	rm -f $(OUT) $(OBJECTS)
+	rm -f $(OUT) $(OBJECTS) compile_commands.json
