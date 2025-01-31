@@ -3,14 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
-func testFoo(name, ageStr string) error {
-	age, err := strconv.Atoi(ageStr)
-	if err != nil {
-		return err
-	}
+func testFoo(name, age string) error {
 
 	foo, err := NewFoo(name, age)
 	if err != nil {
