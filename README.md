@@ -1,4 +1,4 @@
-# Simple equivalent golang and rust programs
+# Simple equivalent C, golang and rust programs
 
 Note that the rust program is simplified (for simplicity it does not use all
 the idiomatic constructs).
