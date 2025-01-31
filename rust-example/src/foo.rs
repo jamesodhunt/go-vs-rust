@@ -8,10 +8,17 @@ pub struct Foo {
     age: u8,
 }
 
+// A bit hopeful, maybe ;)
+const AGE_MAX: usize = 120;
+
 impl Foo {
     pub fn new(name: &str, age_str: &str) -> Result<Foo, String> {
-        if name == "" {
+        if name.is_empty() {
             return Err("need non blank name".to_string());
+        }
+
+        if age_str.is_empty() {
+            return Err("need non blank age".to_string());
         }
 
         let age = match age_str.parse::<u8>() {
@@ -19,14 +26,21 @@ impl Foo {
             Err(e) => return Err(e.to_string()),
         };
 
-        if age > 120 {
+        // Check hard limit
+        if age == u8::MAX {
             return Err("invalid age".to_string());
         }
 
-        let foo = Foo {
-            name: name.to_string(),
-            age: age as u8,
-        };
+        // Check soft limit
+        // Note the "cast"!
+        if age > AGE_MAX as u8 {
+            return Err("nobody's that old!".to_string());
+        }
+
+        // Allocate a _new_ name
+        let name = name.to_string();
+
+        let foo = Foo { name, age };
 
         Ok(foo)
     }

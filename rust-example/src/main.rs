@@ -4,6 +4,9 @@ use std::process::exit;
 mod foo;
 
 fn test_foo(name: &str, age: &str) -> Result<(), String> {
+    // Note: This is the "long-hand" approach, which is easier to understand.
+    //
+    // The experienced programmer can collapse all this code into just "?" ! :)
     let foo = match foo::Foo::new(name, age) {
         Ok(foo) => foo,
         Err(e) => return Err(e),
